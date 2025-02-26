@@ -1,3 +1,45 @@
+local cache = {}
+
+local function inspect_cache()
+  local cache_contents = vim.inspect(cache)
+  vim.notify(cache_contents, vim.log.levels.INFO)
+end
+
+local function load_cache()
+  local project_root = vim.fn.getcwd()
+  -- TEST
+  while project_root ~= "/" do
+    if vim.fn.filereadable(project_root .. "/Gemfile") == 1 then break end
+    project_root = vim.fn.fnamemodify(project_root, ":h")
+  end
+  if vim.fn.filereadable(project_root .. "/Gemfile") ~= 1 then
+    vim.notify("Could not find project root (Gemfile)", vim.log.levels.ERROR)
+    return
+  end
+
+  -- Use ripgrep to find all factory definitions
+  local command = string.format('rg --line-number "factory\\(" --glob "**/factories/**" --type ruby %s', project_root)
+  local handle = io.popen(command)
+  local result = handle:read("*a")
+  handle:close()
+
+  for line in result:gmatch("[^\r\n]+") do
+    local filepath, lnum, factory = line:match("([^:]+):(%d+):%s*factory%(%s*(:[%w_]+)")
+    if filepath and lnum and factory then
+      if not cache[factory] then
+        cache[factory] = {}
+      end
+      table.insert(cache[factory], { filename = filepath, lnum = tonumber(lnum) })
+    end
+  end
+  vim.notify("Factory cache loaded.", vim.log.levels.INFO)
+end
+
+local function refresh_cache()
+  cache = {}
+  load_cache()
+end
+
 local function parse_factory_name()
   -- Get the current line
   -- TEST
@@ -12,43 +54,25 @@ local function parse_factory_name()
 end
 
 local function find_factory_definition(factory_name)
-  -- Project Root Detection
-  local project_root = vim.fn.getcwd()
-  -- TEST
-  while project_root ~= "/" do
-    if vim.fn.filereadable(project_root .. "/Gemfile") == 1 then break end
-    project_root = vim.fn.fnamemodify(project_root, ":h")
-  end
-  if vim.fn.filereadable(project_root .. "/Gemfile") ~= 1 then
-    vim.notify("Could not find project root (Gemfile)", vim.log.levels.ERROR)
-    return
+  if cache[factory_name] then
+    return cache[factory_name]
   end
 
-  -- Use ripgrep to search for the factory definition
-  local command = string.format('rg --line-number "factory\\(%s" --glob "**/factories/**" %s', factory_name, project_root)
-  local handle = io.popen(command)
-  local result = handle:read("*a")
-  handle:close()
-
-  return result
+  refresh_cache()
+  return cache[factory_name]
 end
 
 local function open_factory_definition(factory_name)
-  -- Find the factory definition (this now handles file opening as well)
   local result = find_factory_definition(factory_name)
 
-  local factory_files = {}
-  for line in result:gmatch("[^\r\n]+") do
-    local filepath, lnum = line:match("([^:]+):(%d+):")
-    if filepath and lnum then
-      table.insert(factory_files, { filename = filepath, lnum = tonumber(lnum) })
-    end
+  if not result or #result == 0 then
+    vim.notify("Factory '" .. factory_name .. "' not found.", vim.log.levels.ERROR)
+    return
   end
 
-  -- If multiple files are found, prompt the user to select one
-  if #factory_files > 1 then
+  if #result > 1 then
     local qflist = {}
-    for _, file in ipairs(factory_files) do
+    for _, file in ipairs(result) do
       table.insert(qflist, {
         filename = file.filename,
         lnum = file.lnum,
@@ -56,13 +80,11 @@ local function open_factory_definition(factory_name)
       })
     end
 
-    -- Set the quickfix list without the title argument
     vim.fn.setqflist(qflist, 'r')
-    -- Open the quickfix list
     vim.cmd("copen")
-  elseif #factory_files == 1 then
-    vim.cmd("tabnew " .. factory_files[1].filename)
-    vim.cmd(":" .. factory_files[1].lnum)
+  else
+    vim.cmd("tabnew " .. result[1].filename)
+    vim.cmd(":" .. result[1].lnum)
   end
 end
 
@@ -74,15 +96,12 @@ local function go_to_factory_definition()
     return nil
   end
 
-  local result = find_factory_definition(factory_name)
-
-  if result == "" then
-    vim.notify("Factory '" .. factory_name .. "' not found.", vim.log.levels.ERROR)
-    return nil
-  end
-
   open_factory_definition(factory_name)
 end
 
--- 4. Create a Neovim command
 vim.api.nvim_create_user_command("FindFactory", go_to_factory_definition, { nargs = 0, desc = "Find FactoryBot definition" })
+vim.api.nvim_create_user_command("RefreshFactoryCache", refresh_cache, { nargs = 0, desc = "Refresh FactoryBot cache" })
+vim.api.nvim_create_user_command("InspectFactoryCache", inspect_cache, { nargs = 0, desc = "Inspect FactoryBot cache" })
+
+
+load_cache()
