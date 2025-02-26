@@ -1,6 +1,20 @@
+local function parse_factory_name()
+  -- Get the current line
+  -- TEST
+  local current_line = vim.fn.getline(".")
+
+  -- Extract the factory name using a regular expression
+  local factory_name = current_line:match("build%(([^)]+)%)")
+    or current_line:match("create%(([^)]+)%)")
+    or current_line:match("factory%(([^)]+)%)")
+
+  return factory_name
+end
+
 local function find_factory_definition(factory_name)
-  -- 1. Project Root Detection
+  -- Project Root Detection
   local project_root = vim.fn.getcwd()
+  -- TEST
   while project_root ~= "/" do
     if vim.fn.filereadable(project_root .. "/Gemfile") == 1 then break end
     project_root = vim.fn.fnamemodify(project_root, ":h")
@@ -10,63 +24,65 @@ local function find_factory_definition(factory_name)
     return
   end
 
-  -- 2. Use ripgrep to search for the factory definition
-  local command = string.format('rg --files-with-matches "factory\\(%s" %s', factory_name, project_root)
+  -- Use ripgrep to search for the factory definition
+  local command = string.format('rg --line-number "factory\\(%s" --glob "**/factories/**" %s', factory_name, project_root)
   local handle = io.popen(command)
   local result = handle:read("*a")
   handle:close()
 
-  -- 3. Process ripgrep output
-  if result == "" then
-    vim.notify("Factory '" .. factory_name .. "' not found.", vim.log.levels.ERROR)
-    return nil
-  end
+  return result
+end
+
+local function open_factory_definition(factory_name)
+  -- Find the factory definition (this now handles file opening as well)
+  local result = find_factory_definition(factory_name)
 
   local factory_files = {}
   for line in result:gmatch("[^\r\n]+") do
-    table.insert(factory_files, line)
+    local filepath, lnum = line:match("([^:]+):(%d+):")
+    if filepath and lnum then
+      table.insert(factory_files, { filename = filepath, lnum = tonumber(lnum) })
+    end
   end
 
-  -- 4. If multiple files are found, prompt the user to select one
+  -- If multiple files are found, prompt the user to select one
   if #factory_files > 1 then
     local qflist = {}
     for _, file in ipairs(factory_files) do
       table.insert(qflist, {
-        filename = file,
-        lnum = 1,  -- Default to line number 1, you may adjust if you want to search for specific lines later
-        text = "Factory definition found in: " .. file,
+        filename = file.filename,
+        lnum = file.lnum,
+        text = "Factory definition found in: " .. file.filename,
       })
     end
 
     -- Set the quickfix list without the title argument
     vim.fn.setqflist(qflist, 'r')
-    vim.cmd("copen")  -- Open the quickfix list
-  else
-    vim.cmd("tabnew " .. factory_files[1])
+    -- Open the quickfix list
+    vim.cmd("copen")
+  elseif #factory_files == 1 then
+    vim.cmd("tabnew " .. factory_files[1].filename)
+    vim.cmd(":" .. factory_files[1].lnum)
   end
 end
 
-local function open_factory_definition()
-  -- 1. Get the current line
-  local current_line = vim.fn.getline(".")
-
-  -- 2. Extract the factory name using a regular expression
-  local factory_name = current_line:match("build%(([^)]+)%)")
-    or current_line:match("create%(([^)]+)%)")
-    or current_line:match("factory%(([^)]+)%)")
+local function go_to_factory_definition()
+  local factory_name = parse_factory_name()
 
   if not factory_name then
     vim.notify("No factory name found on this line.", vim.log.levels.WARN)
-    return
+    return nil
   end
 
-  factory_name = factory_name:gsub("['\"]", "") -- Remove quotes
+  local result = find_factory_definition(factory_name)
 
-  -- 3. Find the factory definition (this now handles file opening as well)
-  find_factory_definition(factory_name)
+  if result == "" then
+    vim.notify("Factory '" .. factory_name .. "' not found.", vim.log.levels.ERROR)
+    return nil
+  end
+
+  open_factory_definition(factory_name)
 end
 
 -- 4. Create a Neovim command
-vim.api.nvim_create_user_command("FindFactory", open_factory_definition, { nargs = 0, desc = "Find FactoryBot definition" })
-
-print("FactoryFinder plugin loaded.")
+vim.api.nvim_create_user_command("FindFactory", go_to_factory_definition, { nargs = 0, desc = "Find FactoryBot definition" })
