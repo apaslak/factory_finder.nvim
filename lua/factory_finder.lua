@@ -7,7 +7,6 @@ end
 
 local function load_cache()
   local project_root = vim.fn.getcwd()
-  -- TEST
   while project_root ~= "/" do
     if vim.fn.filereadable(project_root .. "/Gemfile") == 1 then break end
     project_root = vim.fn.fnamemodify(project_root, ":h")
@@ -24,7 +23,7 @@ local function load_cache()
   handle:close()
 
   for line in result:gmatch("[^\r\n]+") do
-    local filepath, lnum, factory = line:match("([^:]+):(%d+):%s*factory%(%s*(:[%w_]+)")
+    local filepath, lnum, factory = line:match("([^:]+):(%d+):%s*factory%(%s*:([%w_]+)")
     if filepath and lnum and factory then
       if not cache[factory] then
         cache[factory] = {}
@@ -41,16 +40,41 @@ local function refresh_cache()
 end
 
 local function parse_factory_name()
-  -- Get the current line
-  -- TEST
-  local current_line = vim.fn.getline(".")
+  local line_nr = vim.api.nvim_win_get_cursor(0)[1]
+  local line = vim.api.nvim_buf_get_lines(0, line_nr - 1, line_nr, false)[1]
 
-  -- Extract the factory name using a regular expression
-  local factory_name = current_line:match("build%(([^)]+)%)")
-    or current_line:match("create%(([^)]+)%)")
-    or current_line:match("factory%(([^)]+)%)")
+  if not line then
+    return nil
+  end
 
-  return factory_name
+  local factory_match = line:match("build%(([^)]+)") or line:match("create%(([^)]+)")
+
+  if factory_match then
+    local factory_name = factory_match:match("[:%s]*([^,%s)]+)")
+    if factory_name then
+      return factory_name
+    end
+  end
+
+  local start_line = line_nr - 1
+  local end_line = vim.api.nvim_buf_line_count(0)
+
+  for i = start_line + 1, end_line do
+    local next_line = vim.api.nvim_buf_get_lines(0, i - 1, i, false)[1]
+    if next_line:match("%)") then
+      local combined_lines = vim.api.nvim_buf_get_lines(0, start_line - 1, i, false)
+      local combined_text = table.concat(combined_lines, " ")
+      local factory_match_multi = combined_text:match("build%(([^)]+)") or combined_text:match("create%(([^)]+)")
+      if factory_match_multi then
+        local factory_name_multi = factory_match_multi:match("[:%s]*([^,%s)]+)")
+        if factory_name_multi then
+          return factory_name_multi
+        end
+      end
+      break
+    end
+  end
+  return nil
 end
 
 local function find_factory_definition(factory_name)
@@ -102,6 +126,5 @@ end
 vim.api.nvim_create_user_command("FindFactory", go_to_factory_definition, { nargs = 0, desc = "Find FactoryBot definition" })
 vim.api.nvim_create_user_command("RefreshFactoryCache", refresh_cache, { nargs = 0, desc = "Refresh FactoryBot cache" })
 vim.api.nvim_create_user_command("InspectFactoryCache", inspect_cache, { nargs = 0, desc = "Inspect FactoryBot cache" })
-
 
 load_cache()
