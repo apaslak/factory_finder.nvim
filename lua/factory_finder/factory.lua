@@ -1,38 +1,19 @@
 local M = {}
 
--- Default configuration
-local default_config = {
-  suppress_notifications = false,
-}
-
--- User configuration
-M.config = {}
+local utils = require('factory_finder.utils')
 
 local cache = {}
 
-local function notify(message, level)
-  if not M.config.suppress_notifications then
-    vim.notify(message, level)
-  end
-end
-
-local function inspect_cache()
-  local cache_contents = vim.inspect(cache)
-  notify(cache_contents, vim.log.levels.INFO)
-end
-
-local function load_cache()
+function M.load_cache(config)
   local project_root = vim.fn.getcwd()
   while project_root ~= "/" do
     if vim.fn.filereadable(project_root .. "/Gemfile") == 1 then break end
     project_root = vim.fn.fnamemodify(project_root, ":h")
   end
   if vim.fn.filereadable(project_root .. "/Gemfile") ~= 1 then
-    -- notify("Could not find project root (Gemfile)", vim.log.levels.ERROR)
     return
   end
 
-  -- Use ripgrep to find all factory definitions
   local command = string.format('rg --line-number "factory\\(" --glob "**/factories/**" --type ruby %s', project_root)
   local handle = io.popen(command)
   local result = handle:read("*a")
@@ -47,18 +28,17 @@ local function load_cache()
       table.insert(cache[factory], { filename = filepath, lnum = tonumber(lnum) })
     end
   end
-  notify("Factory cache loaded.", vim.log.levels.INFO)
+  utils.notify("Factory cache loaded.", vim.log.levels.INFO, config)
 end
 
-function M.setup(user_config)
-  M.config = vim.tbl_extend("force", default_config, user_config or {})
-
-  load_cache()
-end
-
-local function refresh_cache()
+function M.refresh_cache(config)
   cache = {}
-  load_cache()
+  M.load_cache(config)
+end
+
+function M.inspect_cache(config)
+  local cache_contents = vim.inspect(cache)
+  utils.notify(cache_contents, vim.log.levels.INFO, config)
 end
 
 local function parse_factory_name()
@@ -70,7 +50,6 @@ local function parse_factory_name()
   end
 
   local factory_match = line:match("build%(([^)]+)") or line:match("create%(([^)]+)")
-
   if factory_match then
     local factory_name = factory_match:match("[:%s]*([^,%s)]+)")
     if factory_name then
@@ -104,7 +83,7 @@ local function find_factory_definition(factory_name)
     return cache[factory_name]
   end
 
-  refresh_cache()
+  M.refresh_cache()
   return cache[factory_name]
 end
 
@@ -112,7 +91,7 @@ local function open_factory_definition(factory_name)
   local result = find_factory_definition(factory_name)
 
   if not result or #result == 0 then
-    notify("Factory '" .. factory_name .. "' not found.", vim.log.levels.ERROR)
+    utils.notify("Factory '" .. factory_name .. "' not found.", vim.log.levels.ERROR)
     return
   end
 
@@ -133,20 +112,15 @@ local function open_factory_definition(factory_name)
   end
 end
 
-local function go_to_factory_definition()
+function M.go_to_factory_definition()
   local factory_name = parse_factory_name()
 
   if not factory_name then
-    notify("No factory name found on this line.", vim.log.levels.WARN)
+    utils.notify("No factory name found on this line.", vim.log.levels.WARN)
     return nil
   end
 
   open_factory_definition(factory_name)
 end
-
--- Register commands
-vim.api.nvim_create_user_command("FindFactory", go_to_factory_definition, { nargs = 0, desc = "Find FactoryBot definition" })
-vim.api.nvim_create_user_command("RefreshFactoryCache", refresh_cache, { nargs = 0, desc = "Refresh FactoryBot cache" })
-vim.api.nvim_create_user_command("InspectFactoryCache", inspect_cache, { nargs = 0, desc = "Inspect FactoryBot cache" })
 
 return M
