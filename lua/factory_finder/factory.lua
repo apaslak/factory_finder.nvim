@@ -1,10 +1,23 @@
 local M = {}
 
-local utils = require('factory_finder.utils')
+M.utils = require('factory_finder.utils')
+M.filename = "~/.dotfiles/factory_finder/factory.lua"
 
-local cache = {}
+M.cache = {}
 
 function M.load_cache(config)
+  if M.utils.file_exists(M.filename) then
+    -- M.utils.notify("Factory file exists!", vim.log.levels.INFO, config)
+    M.cache = M.utils.read_table_from_file(M.filename)
+    return M.cache
+  end
+  M.refresh_cache(config)
+  return M.cache
+end
+
+function M.refresh_cache(config)
+  M.cache = {}
+
   local project_root = vim.fn.getcwd()
   while project_root ~= "/" do
     if vim.fn.filereadable(project_root .. "/Gemfile") == 1 then break end
@@ -22,26 +35,23 @@ function M.load_cache(config)
   for line in result:gmatch("[^\r\n]+") do
     local filepath, lnum, factory = line:match("([^:]+):(%d+):%s*factory%(%s*:([%w_]+)")
     if filepath and lnum and factory then
-      if not cache[factory] then
-        cache[factory] = {}
+      if not M.cache[factory] then
+        M.cache[factory] = {}
       end
-      table.insert(cache[factory], { filename = filepath, lnum = tonumber(lnum) })
+      table.insert(M.cache[factory], { filename = filepath, lnum = tonumber(lnum) })
     end
   end
-  utils.notify("Factory cache loaded.", vim.log.levels.INFO, config)
-end
+  M.utils.notify("Factory cache loaded.", vim.log.levels.INFO, config)
 
-function M.refresh_cache(config)
-  cache = {}
-  M.load_cache(config)
+  M.utils.write_table_to_file(M.cache, M.filename)
 end
 
 function M.inspect_cache(config)
-  local cache_contents = vim.inspect(cache)
-  utils.notify(cache_contents, vim.log.levels.INFO, config)
+  local cache_contents = vim.inspect(M.cache)
+  M.utils.notify(cache_contents, vim.log.levels.INFO, config)
 end
 
-local function parse_factory_name()
+function M.parse_factory_name()
   local line_nr = vim.api.nvim_win_get_cursor(0)[1]
   local line = vim.api.nvim_buf_get_lines(0, line_nr - 1, line_nr, false)[1]
 
@@ -78,49 +88,25 @@ local function parse_factory_name()
   return nil
 end
 
-local function find_factory_definition(factory_name)
-  if cache[factory_name] then
-    return cache[factory_name]
+function M.find_definition(factory_name, config)
+  if M.cache[factory_name] then
+    return M.cache[factory_name]
   end
 
-  M.refresh_cache()
-  return cache[factory_name]
+  M.refresh_cache(config)
+  return M.cache[factory_name]
 end
 
-local function open_factory_definition(factory_name)
-  local result = find_factory_definition(factory_name)
-
-  if not result or #result == 0 then
-    utils.notify("Factory '" .. factory_name .. "' not found.", vim.log.levels.ERROR)
-    return
-  end
-
-  if #result > 1 then
-    local qflist = {}
-    for _, file in ipairs(result) do
-      table.insert(qflist, {
-        filename = file.filename,
-        lnum = file.lnum,
-      })
-    end
-
-    vim.fn.setqflist(qflist, 'r')
-    vim.cmd("copen")
-  else
-    vim.cmd("tabnew " .. result[1].filename)
-    vim.cmd(":" .. result[1].lnum)
-  end
-end
-
-function M.go_to_factory_definition()
-  local factory_name = parse_factory_name()
+function M.go_to_definition(config)
+  local factory_name = M.parse_factory_name()
 
   if not factory_name then
-    utils.notify("No factory name found on this line.", vim.log.levels.WARN)
+    M.utils.notify("No factory name found on this line.", vim.log.levels.WARN, config)
     return nil
   end
 
-  open_factory_definition(factory_name)
+  local result = M.find_definition(factory_name, config)
+  return M.utils.open_definition(result, factory_name, config)
 end
 
 return M

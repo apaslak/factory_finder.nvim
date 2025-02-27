@@ -11,7 +11,7 @@ With lazy package manager,
   config = function()
     require("factory_finder")
   end,
-  lazy = false, # important for loading the cache when nvim starts
+  event = "VeryLazy",
 }
 ```
 
@@ -30,18 +30,27 @@ end
 You can configure keybinds with the `keys` key sibling to `config` like so
 ```lua
 keys = {
-  { "<leader>fb", ":FindFactory<CR>", desc = "[F]ind Factory[B]ot Definition" },
-  { "<leader>rc", ":RefreshFactoryCache<CR>", desc = "[R]efresh FactoryBot [c]ache" },
-  { "<leader>ic", ":InspectFactoryCache<CR>", desc = "[I]nspect FactoryBot [c]ache" },
+  { "<leader>gd", ":SmartGoToDefinition<CR>", desc = "[G]o to [d]efinition" },
+  { "<leader>rc", ":RefreshCaches<CR>", desc = "[R]efresh [c]aches" },
+  { "<leader>ic", ":InspectCaches<CR>", desc = "[I]nspect [c]aches" },
 },
 ```
+I don't have good keybind suggestions for you here because I hooked into the `gd` LSP go to definition keybind, which is explained below.
 
 ## Commands
 
-There are 3 commands available:
-- :FindFactory, which triggers the "go to definition" for any factory on the line under the cursor
+Here are the available commands:
+- :SmartGoToDefinition, which looks in all available caches for the item under the cursor
+- :RefreshCaches, which refreshes the caches for all items
+- :InspectCaches, which inspects the caches by putting the contents in a notification.
+
+- :FactoryGoToDefinition, which triggers the "go to definition" for any factory on the line under the cursor
 - :RefreshFactoryCache, which triggers a refresh of the factory cache
 - :InspectFactoryCache, which triggers a notification of the factory cache for inspection
+
+- :SharedExampleGoToDefinition, which triggers the "go to definition" for a shared_example on the line under the cursor
+- :RefreshSharedExampleCache, which triggers a refresh of the shared_example cache
+- :InspectSharedExampleCache, which triggers a notification of the shared_example cache for inspection
 
 ## Hooking into LSP 'go to definition'
 
@@ -65,7 +74,7 @@ function M.definition()
     end
   end
 
-  vim.cmd("FindFactory")
+  vim.cmd("SmartGoToDefinition")
 end
 
 return M
