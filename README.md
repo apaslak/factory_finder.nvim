@@ -11,7 +11,7 @@ With lazy package manager,
   config = function()
     require("factory_finder")
   end,
-  lazy = false, # importing for loading the cache when nvim starts
+  lazy = false, # important for loading the cache when nvim starts
 }
 ```
 
