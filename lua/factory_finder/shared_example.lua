@@ -27,13 +27,13 @@ function M.refresh_cache(config)
     return
   end
 
-  local command = string.format('rg --line-number "RSpec\\.shared_examples(_for)?" --type ruby %s', project_root)
+  local command = string.format('rg --line-number "shared_examples(_for)?" --type ruby %s', project_root)
   local handle = io.popen(command)
   local result = handle:read("*a")
   handle:close()
 
   for line in result:gmatch("[^\r\n]+") do
-    local filepath, lnum, example_name = line:match("([^:]+):(%d+):%s*RSpec%.shared_examples%s*'(.-)'")
+  local filepath, lnum, example_name = line:match("^(.-):(%d+):.*shared_examples%s*['\"](.-)['\"]")
     if filepath and lnum and example_name then
       if not M.cache[example_name] then
         M.cache[example_name] = {}
@@ -41,7 +41,7 @@ function M.refresh_cache(config)
       table.insert(M.cache[example_name], { filename = filepath, lnum = tonumber(lnum) })
     end
   end
-  M.utils.notify("Shared_example cache loaded.", vim.log.levels.INFO, config)
+  M.utils.notify("shared_example cache loaded.", vim.log.levels.INFO, config)
 
   M.utils.write_table_to_file(M.cache, M.filename)
 end
@@ -53,7 +53,7 @@ end
 
 function M.parse_example_name()
   local line = vim.api.nvim_get_current_line()
-  local example_name = line:match("it_behaves_like%s+'(.-)'")
+  local example_name = line:match("it_behaves_like%s+'(.-)'") or line:match("include_examples%s+'(.-)'") or line:match("it_should_behave_like%s+'(.-)'")
 
   return example_name
 end
@@ -76,7 +76,7 @@ function M.go_to_definition(config)
   end
 
   local result = M.find_definition(example_name, config)
-  M.utils.open_definition(result, example_name, config)
+  return M.utils.open_definition(result, example_name, config)
 end
 
 return M
