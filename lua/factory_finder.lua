@@ -1,8 +1,24 @@
+local M = {}
+
+-- Default configuration
+local default_config = {
+  suppress_notifications = false,
+}
+
+-- User configuration
+M.config = {}
+
 local cache = {}
+
+local function notify(message, level)
+  if not M.config.suppress_notifications then
+    vim.notify(message, level)
+  end
+end
 
 local function inspect_cache()
   local cache_contents = vim.inspect(cache)
-  vim.notify(cache_contents, vim.log.levels.INFO)
+  notify(cache_contents, vim.log.levels.INFO)
 end
 
 local function load_cache()
@@ -12,7 +28,7 @@ local function load_cache()
     project_root = vim.fn.fnamemodify(project_root, ":h")
   end
   if vim.fn.filereadable(project_root .. "/Gemfile") ~= 1 then
-    vim.notify("Could not find project root (Gemfile)", vim.log.levels.ERROR)
+    -- notify("Could not find project root (Gemfile)", vim.log.levels.ERROR)
     return
   end
 
@@ -31,7 +47,13 @@ local function load_cache()
       table.insert(cache[factory], { filename = filepath, lnum = tonumber(lnum) })
     end
   end
-  vim.notify("Factory cache loaded.", vim.log.levels.INFO)
+  notify("Factory cache loaded.", vim.log.levels.INFO)
+end
+
+function M.setup(user_config)
+  M.config = vim.tbl_extend("force", default_config, user_config or {})
+
+  load_cache()
 end
 
 local function refresh_cache()
@@ -90,7 +112,7 @@ local function open_factory_definition(factory_name)
   local result = find_factory_definition(factory_name)
 
   if not result or #result == 0 then
-    vim.notify("Factory '" .. factory_name .. "' not found.", vim.log.levels.ERROR)
+    notify("Factory '" .. factory_name .. "' not found.", vim.log.levels.ERROR)
     return
   end
 
@@ -100,7 +122,6 @@ local function open_factory_definition(factory_name)
       table.insert(qflist, {
         filename = file.filename,
         lnum = file.lnum,
-        text = "Factory definition found in: " .. file.filename,
       })
     end
 
@@ -116,15 +137,16 @@ local function go_to_factory_definition()
   local factory_name = parse_factory_name()
 
   if not factory_name then
-    vim.notify("No factory name found on this line.", vim.log.levels.WARN)
+    notify("No factory name found on this line.", vim.log.levels.WARN)
     return nil
   end
 
   open_factory_definition(factory_name)
 end
 
+-- Register commands
 vim.api.nvim_create_user_command("FindFactory", go_to_factory_definition, { nargs = 0, desc = "Find FactoryBot definition" })
 vim.api.nvim_create_user_command("RefreshFactoryCache", refresh_cache, { nargs = 0, desc = "Refresh FactoryBot cache" })
 vim.api.nvim_create_user_command("InspectFactoryCache", inspect_cache, { nargs = 0, desc = "Inspect FactoryBot cache" })
 
-load_cache()
+return M
