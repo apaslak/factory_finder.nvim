@@ -26,22 +26,25 @@ local function smart_go_to_definition(config)
   local item_name = factory_finder.parse_factory_name()
   if item_name then
     result = factory_finder.find_definition(item_name, config)
-    return utils.open_definition(result, item_name, config)
+    utils.open_definition(result, item_name, config)
+    return true
   end
 
   item_name = shared_example_finder.parse_example_name()
   if item_name then
     result = shared_example_finder.find_definition(item_name, config)
-    return utils.open_definition(result, item_name, config)
+    utils.open_definition(result, item_name, config)
+    return true
   end
 
   item_name = shared_context_finder.parse_context_name()
   if item_name then
     result = shared_context_finder.find_definition(item_name, config)
-    return utils.open_definition(result, item_name, config)
+    utils.open_definition(result, item_name, config)
+    return true
   end
 
-  return nil
+  return false
 end
 
 local function refresh_caches(config)

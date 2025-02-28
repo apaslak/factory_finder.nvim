@@ -71,7 +71,7 @@ function M.go_to_definition(config)
   local context_name = M.parse_context_name()
 
   if not context_name then
-    M.utils.notify("No factory name found on this line.", vim.log.levels.WARN, config)
+    M.utils.notify("No shared_context found on this line.", vim.log.levels.WARN, config)
     return nil
   end
 

@@ -2,7 +2,6 @@
 This plugin aims to add "go to definition" support for [FactoryBot](https://github.com/thoughtbot/factory_bot) factory definitions.
 
 ## Installation
-NOTE: This plugin requires ripgrep.
 
 With lazy package manager,
 ```lua
@@ -14,6 +13,11 @@ With lazy package manager,
   event = "VeryLazy",
 }
 ```
+## Notes and assumptions
+- When you open neovim for the first time, it will populate the "caches" and be slow. Every time after that, it should not impact performance.
+- This plugin requires ripgrep.
+- This plugin writes files into the `~/.dotfiles/factory_dinder/` directory, but doesn't create it for you.
+
 
 ## Config options
 ### Notifications
