@@ -3,7 +3,7 @@ local utils = require('factory_finder.utils')
 local shared = require("nvim-treesitter.textobjects.shared")
 
 function M.extend_treesitter()
-  local factory_function_query = [[
+  local query = [[
     ; @factories
     (call
       method: (identifier) @factory_method
@@ -20,7 +20,7 @@ function M.extend_treesitter()
       )
     ) @factory_function
   ]]
-  vim.treesitter.query.set("ruby", "factories", factory_function_query)
+  vim.treesitter.query.set("ruby", "factories", query)
 end
 
 function M.identify_factory_name()
