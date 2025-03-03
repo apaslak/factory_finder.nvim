@@ -18,4 +18,66 @@ function M.extract_item_name_from_query(query, function_node, bufnr)
   end
 end
 
+function M.find_project_root()
+  local project_root = vim.fn.getcwd()
+
+  while project_root ~= "/" do
+    if vim.fn.filereadable(project_root .. "/Gemfile") == 1 then break end
+    project_root = vim.fn.fnamemodify(project_root, ":h")
+  end
+
+  if vim.fn.filereadable(project_root .. "/Gemfile") ~= 1 then
+    return nil
+  end
+
+  return project_root
+end
+
+local function execute_command(command)
+    local handle = io.popen(command)
+    local result = handle:read("*a")
+    handle:close()
+    return result
+end
+
+function M.find_items(command)
+    local item_files = {}
+
+    local result = execute_command(command)
+
+    for line in result:gmatch("[^\r\n]+") do
+      local filepath, lnum, factory = line:match("([^:]+):(%d+):%s*factory%(%s*:([%w_]+)")
+      if filepath and lnum and factory then
+        table.insert(item_files, { filename = filepath, lnum = tonumber(lnum) })
+      end
+    end
+
+    return item_files
+end
+
+function M.open_definition(result, item_name, config)
+  if not result or #result == 0 then
+    M.notify("Item '" .. item_name .. "' not found.", vim.log.levels.ERROR, config)
+    return false
+  end
+
+  if #result > 1 then
+    local qflist = {}
+    for _, file in ipairs(result) do
+      table.insert(qflist, {
+        filename = file.filename,
+        lnum = file.lnum,
+      })
+    end
+
+    vim.fn.setqflist(qflist, 'r')
+    vim.cmd("copen")
+    return true
+  else
+    vim.cmd("tabnew " .. result[1].filename)
+    vim.cmd(":" .. result[1].lnum)
+    return true
+  end
+end
+
 return M

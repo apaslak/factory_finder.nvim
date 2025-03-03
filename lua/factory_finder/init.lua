@@ -19,8 +19,8 @@ function M.setup(user_config)
   vim.print('prepped the queries')
 end
 
-vim.api.nvim_create_user_command('IsFactoryFunction', function() factory_finder.identify_factory_name() end, {})
-vim.api.nvim_create_user_command('IsSharedExample', function() shared_example_finder.identify_shared_example_name() end, {})
-vim.api.nvim_create_user_command('IsSharedContext', function() shared_context_finder.identify_shared_context_name() end, {})
+vim.api.nvim_create_user_command('FindFactory', function() factory_finder.go_to_definition() end, {})
+-- vim.api.nvim_create_user_command('IsSharedExample', function() shared_example_finder.identify_shared_example_name() end, {})
+-- vim.api.nvim_create_user_command('IsSharedContext', function() shared_context_finder.identify_shared_context_name() end, {})
 
 return M

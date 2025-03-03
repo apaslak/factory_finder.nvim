@@ -34,4 +34,24 @@ function M.identify_factory_name()
   return nil
 end
 
+function M.find_definition(factory_name)
+  local project_root = utils.find_project_root()
+  if not project_root then
+    -- vim.print("Not a Ruby repo")
+    return
+  end
+
+  local command = string.format('rg --line-number "factory\\(%s" --glob "**/factories/**" --type ruby %s', factory_name, project_root)
+  local items = utils.find_items(command)
+
+  -- M.utils.notify("Factory cache loaded.", vim.log.levels.INFO, config)
+  return items
+end
+
+function M.go_to_definition()
+  local factory_name = M.identify_factory_name()
+  local result =  M.find_definition(factory_name)
+  return utils.open_definition(result, factory_name, {})
+end
+
 return M
