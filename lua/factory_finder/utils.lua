@@ -10,11 +10,8 @@ function M.extract_item_name_from_query(query, function_node, bufnr)
     if #matches > 0 then
       local name_node = matches[1][1]
       local name = vim.treesitter.get_node_text(name_node, bufnr)
-      vim.print("Item name:", name)
       return name
     end
-  else
-    vim.print("Query parsing failed.")
   end
 end
 
@@ -55,9 +52,8 @@ function M.find_items(command)
     return item_files
 end
 
-function M.open_definition(result, item_name, config)
+function M.open_definition(result)
   if not result or #result == 0 then
-    M.notify("Item '" .. item_name .. "' not found.", vim.log.levels.ERROR, config)
     return false
   end
 

@@ -15,8 +15,6 @@ function M.setup(user_config)
   factory_finder.extend_treesitter()
   shared_example_finder.extend_treesitter()
   shared_context_finder.extend_treesitter()
-
-  vim.print('prepped the queries')
 end
 
 vim.api.nvim_create_user_command('FindFactory', function() factory_finder.go_to_definition() end, {})
