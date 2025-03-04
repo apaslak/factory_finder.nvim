@@ -1,5 +1,8 @@
 # Factory Finder
-This plugin aims to add "go to definition" support for [FactoryBot](https://github.com/thoughtbot/factory_bot) factory definitions.
+This plugin aims to add "go to definition" support for:
+- [FactoryBot](https://github.com/thoughtbot/factory_bot) factory definitions.
+- [RSpec shared_examples](https://rspec.info/features/3-12/rspec-core/example-groups/shared-examples/)
+- [RSpec shared_context](https://rspec.info/features/3-12/rspec-core/example-groups/shared-context/)
 
 ## Installation
 
