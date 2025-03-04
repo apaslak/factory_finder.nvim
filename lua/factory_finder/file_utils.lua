@@ -1,8 +1,28 @@
 local M = {}
 local cache_dir = vim.fn.stdpath('cache') .. '/factory_finder/'
+local repo_dir
+
+function M.get_or_create_repo_dir(project_root)
+  -- create plugin dir
+  if not vim.loop.fs_stat(cache_dir) then
+    vim.loop.fs_mkdir(cache_dir, 493) -- 493 is the octal permission 0755
+  end
+
+  -- create plugin/repo dir
+  local repo_name = vim.fn.fnamemodify(project_root, ':t')
+  repo_dir = cache_dir .. repo_name
+
+  if not vim.loop.fs_stat(repo_dir) then
+    vim.loop.fs_mkdir(repo_dir, 493) -- 493 is the octal permission 0755
+  end
+
+  repo_dir = repo_dir .. "/"
+
+  return repo_dir
+end
 
 function M.file_exists(filename)
-  filename = cache_dir .. filename
+  filename = repo_dir .. filename
   local file = io.open(filename, "r")
   if file then
     file:close()
@@ -63,7 +83,7 @@ function M.serialize_table(t, indent)
 end
 
 function M.write_table_to_file(t, filename)
-  filename = cache_dir .. filename
+  filename = repo_dir .. filename
   local file = io.open(filename, "w")
   if file then
     local serialized_table = M.serialize_table(t)
@@ -75,7 +95,7 @@ function M.write_table_to_file(t, filename)
 end
 
 function M.read_table_from_file(filename)
-  filename = cache_dir .. filename
+  filename = repo_dir .. filename
   local file = io.open(filename, "r")
   if file then
     local content = file:read("*a")

@@ -1,5 +1,6 @@
 local M = {}
 local utils = require('factory_finder.utils')
+local file_utils = require('factory_finder.file_utils')
 local factory_finder = require('factory_finder.factory')
 local shared_example_finder = require('factory_finder.shared_example')
 local shared_context_finder = require('factory_finder.shared_context')
@@ -8,21 +9,13 @@ local default_config = {}
 
 M.config = {}
 
-local function init_plugin_directory()
-  local cache_dir = vim.fn.stdpath('cache') .. '/factory_finder/'
-
-  if not vim.loop.fs_stat(cache_dir) then
-    vim.loop.fs_mkdir(cache_dir, 493) -- 493 is the octal permission 0755
-  end
-end
-
 function M.setup(user_config)
-  init_plugin_directory()
   local project_root = utils.find_project_root()
   if not project_root then
     return
   end
 
+  file_utils.get_or_create_repo_dir(project_root)
   M.config = vim.tbl_extend("force", default_config, user_config or {})
 
   factory_finder.extend_treesitter()
