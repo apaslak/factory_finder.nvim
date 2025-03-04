@@ -21,10 +21,10 @@ end
 function M.load_cache()
   if file_utils.file_exists(filename) then
     cache = file_utils.read_table_from_file(filename)
-    vim.notify("[load_cache:shared_context] read from file")
+    -- vim.notify("[load_cache:shared_context] read from file")
     return cache
   end
-  vim.notify("[load_cache:shared_context] refreshed cache")
+  -- vim.notify("[load_cache:shared_context] refreshed cache")
   M.refresh_cache()
   return cache
 end
