@@ -37,19 +37,22 @@ local function execute_command(command)
     return result
 end
 
-function M.find_items(command)
-    local item_files = {}
+function M.find_items(command, matcher)
+  local item_files = {}
 
-    local result = execute_command(command)
+  local result = execute_command(command)
 
-    for line in result:gmatch("[^\r\n]+") do
-      local filepath, lnum, factory = line:match("([^:]+):(%d+):%s*factory%(%s*:([%w_]+)")
-      if filepath and lnum and factory then
-        table.insert(item_files, { filename = filepath, lnum = tonumber(lnum) })
+  for line in result:gmatch("[^\r\n]+") do
+    local filepath, lnum, item = line:match(matcher)
+    if filepath and lnum and item then
+      if not item_files[item] then
+        item_files[item] = {}
       end
+      table.insert(item_files[item], { filename = filepath, lnum = tonumber(lnum) })
     end
+  end
 
-    return item_files
+  return item_files
 end
 
 function M.open_definition(result)
