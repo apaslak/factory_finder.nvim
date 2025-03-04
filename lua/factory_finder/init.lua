@@ -1,4 +1,5 @@
 local M = {}
+local utils = require('factory_finder.utils')
 local factory_finder = require('factory_finder.factory')
 local shared_example_finder = require('factory_finder.shared_example')
 local shared_context_finder = require('factory_finder.shared_context')
@@ -16,8 +17,13 @@ local function init_plugin_directory()
 end
 
 function M.setup(user_config)
-  M.config = vim.tbl_extend("force", default_config, user_config or {})
   init_plugin_directory()
+  local project_root = utils.find_project_root()
+  if not project_root then
+    return
+  end
+
+  M.config = vim.tbl_extend("force", default_config, user_config or {})
 
   factory_finder.extend_treesitter()
   shared_example_finder.extend_treesitter()
