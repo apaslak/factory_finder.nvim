@@ -40,9 +40,5 @@ local function go_to_definition()
 end
 
 vim.api.nvim_create_user_command('SmartGoToDefinition', function() go_to_definition() end, {})
--- vim.api.nvim_create_user_command('RefreshCache', function() factory_finder.refresh_cache() end, {})
-vim.api.nvim_create_user_command('InspectCache', function() shared_context_finder.inspect_cache() end, {})
--- vim.api.nvim_create_user_command('IsSharedExample', function() shared_example_finder.identify_shared_example_name() end, {})
--- vim.api.nvim_create_user_command('IsSharedContext', function() shared_context_finder.identify_shared_context_name() end, {})
 
 return M
