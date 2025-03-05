@@ -27,18 +27,27 @@ function M.setup(user_config)
   shared_context_finder.load_cache()
 end
 
-local function go_to_definition()
-  if factory_finder.go_to_definition() then
-    return
-  end
-  if shared_example_finder.go_to_definition() then
-    return
-  end
-  if shared_context_finder.go_to_definition() then
-    return
-  end
+function M.refresh_caches()
+  factory_finder.refresh_cache()
+  shared_example_finder.refresh_cache()
+  shared_context_finder.refresh_cache()
 end
 
-vim.api.nvim_create_user_command('SmartGoToDefinition', function() go_to_definition() end, {})
+function M.go_to_definition()
+  if factory_finder.go_to_definition() then
+    return true
+  end
+  if shared_example_finder.go_to_definition() then
+    return true
+  end
+  if shared_context_finder.go_to_definition() then
+    return true
+  end
+
+  return false
+end
+
+vim.api.nvim_create_user_command('SmartGoToDefinition', function() M.go_to_definition() end, {})
+vim.api.nvim_create_user_command('RefreshCaches', function() M.refresh_caches() end, {})
 
 return M
