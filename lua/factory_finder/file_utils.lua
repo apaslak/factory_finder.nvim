@@ -95,20 +95,7 @@ function M.write_table_to_file(t, filename)
 end
 
 function M.read_table_from_file(filename)
-  filename = repo_dir .. filename
-  local file = io.open(filename, "r")
-  if file then
-    local content = file:read("*a")
-    file:close()
-    local func = load(content)
-    if func then
-      return func()
-    else
-      error("Could not load table from file " .. filename)
-    end
-  else
-    error("Could not open file " .. filename .. " for reading.")
-  end
+  return require(cache_dir .. filename)
 end
 
 return M

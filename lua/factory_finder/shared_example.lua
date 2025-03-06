@@ -3,7 +3,6 @@ local utils = require('factory_finder.utils')
 local file_utils = require('factory_finder.file_utils')
 local shared = require("nvim-treesitter.textobjects.shared")
 local filename = "shared_example.lua"
-local cache = {}
 
 function M.extend_treesitter()
   local query = [[
@@ -24,17 +23,13 @@ end
 
 function M.load_cache()
   if file_utils.file_exists(filename) then
-    cache = file_utils.read_table_from_file(filename)
-    -- vim.notify("[load_cache:shared_example] read from file")
-    return cache
+    return file_utils.read_table_from_file(filename)
   end
-  -- vim.notify("[load_cache:shared_example] refreshed cache")
-  M.refresh_cache()
-  return cache
+  return M.refresh_cache()
 end
 
 function M.refresh_cache()
-  cache = {}
+  local cache = {}
 
   local project_root = utils.find_project_root()
   if not project_root then
@@ -51,8 +46,7 @@ function M.refresh_cache()
 end
 
 function M.inspect_cache()
-  local cache_contents = vim.inspect(cache)
-  vim.notify(cache_contents)
+  vim.notify(M.cache())
 end
 
 function M.identify_name()
@@ -71,11 +65,11 @@ function M.identify_name()
 end
 
 function M.find_definition(item_name)
-  if cache[item_name] then
-    return cache[item_name]
+  if M.cache[item_name] then
+    return M.cache[item_name]
   end
 
-  M.refresh_cache()
+  local cache = M.refresh_cache()
   return cache[item_name]
 end
 
