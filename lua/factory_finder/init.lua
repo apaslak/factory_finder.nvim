@@ -22,9 +22,9 @@ function M.setup(user_config)
   shared_example_finder.extend_treesitter()
   shared_context_finder.extend_treesitter()
 
-  factory_finder.load_cache()
-  shared_example_finder.load_cache()
-  shared_context_finder.load_cache()
+  -- factory_finder.load_cache()
+  -- shared_example_finder.load_cache()
+  -- shared_context_finder.load_cache()
 end
 
 function M.refresh_caches()

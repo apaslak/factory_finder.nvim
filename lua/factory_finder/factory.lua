@@ -65,8 +65,8 @@ function M.identify_name()
 end
 
 function M.find_definition(item_name)
-  if M.cache[item_name] then
-    return M.cache[item_name]
+  if M.cache()[item_name] then
+    return M.cache()[item_name]
   end
 
   local cache = M.refresh_cache()
