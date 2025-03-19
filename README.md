@@ -15,7 +15,7 @@ With lazy package manager,
     "nvim-treesitter/nvim-treesitter-textobjects",
   },
   config = function()
-    require("factory_finder")
+    require("factory_finder").setup({})
   end
 }
 ```
