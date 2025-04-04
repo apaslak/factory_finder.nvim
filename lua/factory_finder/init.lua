@@ -5,7 +5,9 @@ local factory_finder = require('factory_finder.factory')
 local shared_example_finder = require('factory_finder.shared_example')
 local shared_context_finder = require('factory_finder.shared_context')
 
-local default_config = {}
+local default_config = {
+  open_in_new_tab = false
+}
 
 M.config = {}
 
@@ -34,13 +36,13 @@ function M.refresh_caches()
 end
 
 function M.go_to_definition()
-  if factory_finder.go_to_definition() then
+  if factory_finder.go_to_definition(M.config) then
     return true
   end
-  if shared_example_finder.go_to_definition() then
+  if shared_example_finder.go_to_definition(M.config) then
     return true
   end
-  if shared_context_finder.go_to_definition() then
+  if shared_context_finder.go_to_definition(M.config) then
     return true
   end
 

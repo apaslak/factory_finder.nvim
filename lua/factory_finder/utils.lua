@@ -55,7 +55,7 @@ function M.find_items(command, matcher)
   return item_files
 end
 
-function M.open_definition(result)
+function M.open_definition(result, config)
   if not result or #result == 0 then
     return false
   end
@@ -73,7 +73,11 @@ function M.open_definition(result)
     vim.cmd("copen")
     return true
   else
-    vim.cmd("tabnew " .. result[1].filename)
+    if config.open_in_new_tab then
+      vim.cmd("tabnew " .. result[1].filename)
+    else
+      vim.cmd("edit " .. result[1].filename)
+    end
     vim.cmd(":" .. result[1].lnum)
     return true
   end

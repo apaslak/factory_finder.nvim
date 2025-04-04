@@ -75,14 +75,14 @@ function M.find_definition(item_name)
   return cache[item_name]
 end
 
-function M.go_to_definition()
+function M.go_to_definition(config)
   local item_name = M.identify_name()
   if not item_name then
     return false
   end
 
   local result = M.find_definition(item_name)
-  utils.open_definition(result)
+  utils.open_definition(result, config)
 
   return true
 end

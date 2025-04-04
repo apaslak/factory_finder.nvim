@@ -15,7 +15,9 @@ With lazy package manager,
     "nvim-treesitter/nvim-treesitter-textobjects",
   },
   config = function()
-    require("factory_finder").setup({})
+    require("factory_finder").setup({
+      open_in_new_tab = false # default
+    })
   end
 }
 ```
@@ -26,6 +28,9 @@ With lazy package manager,
 
 
 ## Config options
+### Options
+- `open_in_new_tab` defaults to false, but you can set it to true to open the definition in a new tab.
+
 ### Keybinds
 
 You can configure keybinds with the `keys` key sibling to `config` like so
