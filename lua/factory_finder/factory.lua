@@ -13,6 +13,16 @@ function M.extend_treesitter()
       (#any-of? @factory_method
          "create"
          "build"
+         "build_stubbed"
+         "attributes_for"
+         "attributes_for_list"
+         "build_list"
+         "create_list"
+         "build_stubbed_list"
+         "create_pair"
+         "build_pair"
+         "build_stubbed_pair"
+         "attributes_for_pair"
          )
       arguments: (argument_list
         (simple_symbol) @factory_name
