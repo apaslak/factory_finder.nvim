@@ -55,8 +55,8 @@ function M.refresh_cache()
     return
   end
 
-  local command = string.format('rg --line-number "factory\\(" --glob "**/factories/**" --type ruby %s', project_root)
-  local matcher = "([^:]+):(%d+):%s*factory%(%s*(:[%w_]+)"
+  local command = string.format('rg --line-number "factory[( ]" --glob "**/factories/**" --type ruby %s', project_root)
+  local matcher = "([^:]+):(%d+):%s*factory[%(%s]%s*(:[%w_]+)"
   cache = utils.find_items(command, matcher)
 
   file_utils.write_table_to_file(cache, filename)
