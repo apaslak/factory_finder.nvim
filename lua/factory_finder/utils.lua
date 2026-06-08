@@ -37,7 +37,7 @@ local function execute_command(command)
   return result
 end
 
-function M.find_items(command, matcher)
+function M.find_items(command, matcher, project_root)
   local item_files = {}
 
   local result = execute_command(command)
@@ -45,6 +45,13 @@ function M.find_items(command, matcher)
   for line in result:gmatch("[^\r\n]+") do
     local filepath, lnum, item = line:match(matcher)
     if filepath and lnum and item then
+      -- Store relative path by stripping project_root prefix
+      if project_root and filepath:sub(1, #project_root) == project_root then
+        filepath = filepath:sub(#project_root + 1)
+        if filepath:sub(1, 1) == "/" then
+          filepath = filepath:sub(2)
+        end
+      end
       if not item_files[item] then
         item_files[item] = {}
       end
@@ -60,11 +67,17 @@ function M.open_definition(result, config)
     return false
   end
 
+  local project_root = config.project_root
+
   if #result > 1 then
     local qflist = {}
     for _, file in ipairs(result) do
+      local abs_path = file.filename
+      if project_root and not vim.startswith(abs_path, "/") then
+        abs_path = project_root .. "/" .. abs_path
+      end
       table.insert(qflist, {
-        filename = file.filename,
+        filename = abs_path,
         lnum = file.lnum,
       })
     end
@@ -73,10 +86,14 @@ function M.open_definition(result, config)
     vim.cmd("copen")
     return true
   else
+    local abs_path = result[1].filename
+    if project_root and not vim.startswith(abs_path, "/") then
+      abs_path = project_root .. "/" .. abs_path
+    end
     if config.open_in_new_tab then
-      vim.cmd("tabnew " .. result[1].filename)
+      vim.cmd("tabnew " .. abs_path)
     else
-      vim.cmd("edit " .. result[1].filename)
+      vim.cmd("edit " .. abs_path)
     end
     vim.cmd(":" .. result[1].lnum)
     return true

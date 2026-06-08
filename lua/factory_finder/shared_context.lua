@@ -39,7 +39,7 @@ function M.refresh_cache(config)
 
   local command = string.format('rg --line-number "shared_context" --type ruby %s', project_root)
   local matcher = "^(.-):(%d+):.*['\"](.-)['\"]"
-  cache = utils.find_items(command, matcher)
+  cache = utils.find_items(command, matcher, project_root)
 
   file_utils.write_table_to_file(cache, filename)
 
