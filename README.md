@@ -25,6 +25,7 @@ With lazy package manager,
 - When you open neovim for the first time, it will populate the "caches" and be slow. Every time after that, it should not impact performance.
 - This plugin requires ripgrep.
 - This plugin was designed for a large mono repo using [Packwerk](https://github.com/Shopify/packwerk) such that the file location of these definitions is less straight forward.
+- This plugin supports git worktrees. All worktrees of the same repo share one definition cache; files resolve to the current worktree automatically.
 
 
 ## Config options
