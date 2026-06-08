@@ -29,10 +29,10 @@ function M.load_cache()
   return cache
 end
 
-function M.refresh_cache()
+function M.refresh_cache(config)
   cache = {}
 
-  local project_root = utils.find_project_root()
+  local project_root = config and config.project_root or utils.find_project_root()
   if not project_root then
     return
   end

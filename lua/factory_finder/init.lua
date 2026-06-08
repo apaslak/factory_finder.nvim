@@ -19,6 +19,7 @@ function M.setup(user_config)
 
   file_utils.get_or_create_repo_dir(project_root)
   M.config = vim.tbl_extend("force", default_config, user_config or {})
+  M.config.project_root = project_root
 
   factory_finder.extend_treesitter()
   shared_example_finder.extend_treesitter()
@@ -30,9 +31,9 @@ function M.setup(user_config)
 end
 
 function M.refresh_caches()
-  factory_finder.refresh_cache()
-  shared_example_finder.refresh_cache()
-  shared_context_finder.refresh_cache()
+  factory_finder.refresh_cache(M.config)
+  shared_example_finder.refresh_cache(M.config)
+  shared_context_finder.refresh_cache(M.config)
 end
 
 function M.go_to_definition()
