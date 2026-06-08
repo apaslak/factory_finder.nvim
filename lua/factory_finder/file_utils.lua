@@ -2,6 +2,21 @@ local M = {}
 local cache_dir = vim.fn.stdpath('cache') .. '/factory_finder/'
 local repo_dir
 
+local function get_repo_identity(project_root)
+  local common_dir = vim.fn.system(
+    "git -C " .. vim.fn.shellescape(project_root) .. " rev-parse --git-common-dir"
+  ):gsub("%s+$", "")
+
+  -- git-common-dir returns relative path for main repo, absolute for worktrees
+  if not common_dir:match("^/") then
+    common_dir = project_root .. "/" .. common_dir
+  end
+  common_dir = vim.fn.resolve(common_dir)
+
+  -- Use parent dir name (the repo root name) for human readability
+  return vim.fn.fnamemodify(common_dir, ":h:t")
+end
+
 function M.get_or_create_repo_dir(project_root)
   -- create plugin dir
   if not vim.loop.fs_stat(cache_dir) then
@@ -9,7 +24,7 @@ function M.get_or_create_repo_dir(project_root)
   end
 
   -- create plugin/repo dir
-  local repo_name = vim.fn.fnamemodify(project_root, ':t')
+  local repo_name = get_repo_identity(project_root)
   repo_dir = cache_dir .. repo_name
 
   if not vim.loop.fs_stat(repo_dir) then
